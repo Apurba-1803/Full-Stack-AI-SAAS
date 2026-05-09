@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { dummyCreationData } from '../assets/assets'
 import { ChartColumnStacked, Gem } from 'lucide-react'
 import { Protect } from "@clerk/clerk-react";
+import { CreationItems } from '../components/CreationItems'
 
 const Dashboard = () => {
 
@@ -43,6 +44,14 @@ const Dashboard = () => {
         <Gem className='w-5 text-white'/>
        </div>
     </div>
+    </div>
+
+
+    <div className='space-y-3'>
+      <p className='mt-6 mb-4'>Recent Creations</p>
+      {
+        creation.map((item)=> <CreationItems key={item.id} item={item}/>)
+      }
     </div>
     
     </div>
