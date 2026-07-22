@@ -10,8 +10,18 @@ import RemoveBackground from "./pages/RemoveBackground";
 import ReviewResume from "./pages/ReviewResume";
 import RemoveObject from "./pages/RemoveObject";
 import WriteArticle from "./pages/WriteArticle";
+import { useAuth } from "@clerk/clerk-react";
+import { useEffect } from "react";
 
 const App = () => {
+
+  const {getToken} = useAuth()
+  useEffect(() => {
+    getToken().then((token) => {
+      console.log("Token:", token);
+    })
+  }, [])
+
   return (
     <div>
       <Routes>
