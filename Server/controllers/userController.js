@@ -34,8 +34,8 @@ export const toggleLikeCreation = async (req, res) => {
 
     const currentLikes = creation.likes;
     const userIdStr = userId.toString();
-    const updatedLikes;
-    const message;
+    const updatedLikes = 0;
+    const message = "";
 
     if (currentLikes.includes(userIdStr)) {
       updatedLikes = currentLikes.filter((user) => user !== userIdStr);
