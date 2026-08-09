@@ -1,20 +1,76 @@
-import { Atom, Hash } from 'lucide-react';
-import React, { useState } from 'react'
+import { Atom, Hash } from "lucide-react";
+import React, { useState } from "react";
+import axios from "axios";
+import { useAuth } from "@clerk/clerk-react";
+import { toast } from "react-hot-toast";
+import Markdown from "react-markdown";
+
+axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
 const BlogTitles = () => {
+  const blogCategories = [
+    "General",
+    "Technology",
+    "Health",
+    "Business",
+    "Travel",
+    "Food",
+    "Education",
+    "Lifestyle",
+  ];
 
-   const blogCategories = ['General', 'Technology', 'Health', 'Business', 'Travel', 'Food', 'Education', 'Lifestyle'];
-  
-    const [selectedCategory, setSelectedCategory] = useState('General');
-    const [input, setInput] = useState("");
-  
-    const onSubmitHandler = async (e) => {
-      e.preventDefault();
-      // Handle form submission logic here
-    };
+  const [selectedCategory, setSelectedCategory] = useState("General");
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [content, setContent] = useState("");
+
+  const { getToken } = useAuth();
+
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+    // Handle form submission logic here
+    try {
+      setLoading(true);
+      const prompt = `
+Generate exactly 5 different and catchy blog post titles.
+
+Topic: ${input}
+Category: ${selectedCategory}
+
+Rules:
+- Return exactly 5 titles.
+- Each title must be on a separate line.
+- Do not add numbers.
+- Do not add bullet points.
+- Do not add explanations.
+- Do not write anything except the 5 titles.
+`;
+      const { data } = await axios.post(
+        "/api/ai/generate-blog-title",
+        { prompt },
+        { headers: { Authorization: `Bearer ${await getToken()}` } },
+      );
+
+      if (data.success) {
+        setContent(data.content);
+      } else {
+        toast.error(
+          data.message || "Failed to generate blog titles. Please try again.",
+        );
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to generate blog titles. Please try again.",
+      );
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-      <div className="h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 text-slate-700">
+    <div className="h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4 text-slate-700">
       {/* left column */}
       <form
         onSubmit={onSubmitHandler}
@@ -47,8 +103,15 @@ const BlogTitles = () => {
           ))}
         </div>
         <br />
-        <button className="w-full flex justify-center items-center gap-2 bg-gradient-to-r from-[#C341F6] to-[#8E37EB] text-white px-4 py-2 mt-6 text-sm rounded-lg cursor-pointer">
-          <Hash className="w-5" />
+        <button
+          disabled={loading}
+          className="w-full flex justify-center items-center gap-2 bg-gradient-to-r from-[#C341F6] to-[#8E37EB] text-white px-4 py-2 mt-6 text-sm rounded-lg cursor-pointer"
+        >
+          {loading ? (
+            <span className="w-4 h-4 my-1 rounded-full border-2 border-t-transparent animate-spin"></span>
+          ) : (
+            <Hash className="w-5" />
+          )}
           Generate Title
         </button>
       </form>
@@ -59,15 +122,28 @@ const BlogTitles = () => {
           <h1 className="text-xl font-semibold"> Generated Titles </h1>
         </div>
 
-        <div className="flex-1 flex justify-center items-center">
-          <div className="text-sm flex flex-col items-center gap-5 text-gray-400 ">
-            <Hash className="w-9 h-9" />
-            <p>Enter a topic and click "Generate Title" to get started</p>
+        {!content ? (
+          <div className="flex-1 flex justify-center items-center">
+            <div className="text-sm flex flex-col items-center gap-5 text-gray-400 ">
+              <Hash className="w-9 h-9" />
+              <p>Enter a topic and click "Generate Title" to get started</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="overflow-y-scroll text-slate-600 mt-3 max-h-80 text-sm space-y-3">
+            {content
+              .split(/\r?\n/)
+              .filter(Boolean)
+              .map((line, index) => (
+                <p key={index} className="leading-relaxed">
+                  {line}
+                </p>
+              ))}
+          </div>
+        )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BlogTitles
+export default BlogTitles;

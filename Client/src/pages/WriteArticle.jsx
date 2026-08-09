@@ -3,6 +3,7 @@ import { Atom, Edit } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
 import { toast } from "react-hot-toast";
+import Markdown from "react-markdown";
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
@@ -26,7 +27,7 @@ const WriteArticle = () => {
     try {
       setLoading(true);
       const prompt = `Write an article on the topic: "${input}". The article should be approximately ${selectedLength.text} words long.`;
-      const {data} = await axios.post('api/ai/generate-article', { prompt, length: selectedLength.length }, { headers: { Authorization: `Bearer ${await getToken()}` }}
+      const {data} = await axios.post('/api/ai/generate-article', { prompt, length: selectedLength.length }, { headers: { Authorization: `Bearer ${await getToken()}` }}
       )
 
       if (data.success) {
@@ -38,6 +39,9 @@ const WriteArticle = () => {
     }
       catch (error) {
         toast.error(data.message || "Failed to generate article. Please try again.");
+        setLoading(false);
+      }
+      finally {
         setLoading(false);
       }
   };
@@ -97,8 +101,8 @@ const WriteArticle = () => {
           </div>
         </div>
         ) : (
-          <div className="text-slate-600 overflow-y-scroll mt-3 h-full text-sm">
-          <div className = ".reset-tw">
+          <div className="overflow-y-scroll text-slate-600  mt-3 max-h-150 text-sm">
+          <div className = "reset-tw">
           <Markdown>{content}</Markdown>
           </div>
           </div>
