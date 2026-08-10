@@ -279,9 +279,15 @@ export const reviewResume = async (req, res) => {
       });
     }
 
-    const dataBuffer = fs.readFileSync(resume.path);
+   const dataBuffer = fs.readFileSync(resume.path);
 
-    const pdfData = await PDFParse(dataBuffer);
+const parser = new PDFParse({
+  data: dataBuffer,
+});
+
+const pdfData = await parser.getText();
+
+await parser.destroy();
 
     const prompt = `Please review the following resume and provide feedback on its strengths, weaknesses, and areas for improvement. Resume content: \n\n${pdfData.text}`;
 
