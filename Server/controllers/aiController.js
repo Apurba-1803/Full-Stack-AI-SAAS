@@ -4,7 +4,6 @@ import { clerkClient } from "@clerk/express";
 import axios from "axios";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import { PDFParse } from "pdf-parse";
 
 const AI = new OpenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -179,7 +178,7 @@ export const generateImage = async (req, res) => {
 export const removeImageBackground = async (req, res) => {
   try {
     const { userId } = await req.auth();
-    const  image  = req.file;
+    const image = req.file;
     const plan = req.plan;
 
     if (plan !== "premium") {
@@ -221,7 +220,7 @@ export const removeObject = async (req, res) => {
   try {
     const { userId } = await req.auth();
     const { object } = req.body;
-    const  image  = req.file;
+    const image = req.file;
     const plan = req.plan;
 
     if (plan !== "premium") {
@@ -279,15 +278,26 @@ export const reviewResume = async (req, res) => {
       });
     }
 
-   const dataBuffer = fs.readFileSync(resume.path);
+    const dataBuffer = fs.readFileSync(resume.path);
 
-const parser = new PDFParse({
-  data: dataBuffer,
-});
+    let PDFParse;
+    try {
+      const mod = await import("pdf-parse");
+      PDFParse = mod.PDFParse || mod.default || mod;
+    } catch (err) {
+      console.error("pdf-parse failed to load:", err.message);
+      return res.status(500).json({
+        success: false,
+        message:
+          "PDF parsing is not available in this deployment environment (native canvas binary missing). Try deploying with a Docker image that includes native libs or remove the resume review feature.",
+      });
+    }
 
-const pdfData = await parser.getText();
+    const parser = new PDFParse({ data: dataBuffer });
 
-await parser.destroy();
+    const pdfData = await parser.getText();
+
+    if (typeof parser.destroy === "function") await parser.destroy();
 
     const prompt = `Please review the following resume and provide feedback on its strengths, weaknesses, and areas for improvement. Resume content: \n\n${pdfData.text}`;
 
